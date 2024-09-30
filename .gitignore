@@ -37,3 +37,4 @@ lib/whisper
 
 build/
 cmake-*/
+piper/
