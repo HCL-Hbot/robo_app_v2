@@ -6,7 +6,6 @@
 #include <iostream>
 #include <fstream>
 #include <atomic>
-#include <mosquitto.h>
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/opencv.hpp>
@@ -15,10 +14,10 @@
 #include <boost/asio.hpp>
 #include <person_detector.hpp>
 #include <brainboard_host.hpp>
-#include "settings.hpp"
-#include <llama_helper.hpp>
-#include <llama_wrapper.hpp>
+#include <settings.hpp>
+#include "common.h"
 #include <whisper_helper.hpp>
+#include <llama_wrapper.hpp>
 #include <whisper_wrapper.hpp>
 #include <common-sdl.h>
 
@@ -54,11 +53,21 @@ int main(int argc, char *argv[])
      */
     llama_wrapper llama_inst(params);
 
+    /*
+     * Create the async audio buffer with a instance of the RTP receiver so that the RTP receiver automatically updates the audio buffer
+    */
+    audio_async audio(audio_buffer_size_ms);
+    if (!audio.init(1, WHISPER_SAMPLE_RATE))
+    {
+        fprintf(stderr, "%s: audio.init() failed!\n", __func__);
+        return 1;
+    }
+
+
     // Start the audio capture
     audio.resume();
 
-    // clear audio buffer
-    audio.clear();
+
 
     /* This function call will load in the whisper model
      * It will also do a test run to calibrate the response of the model
@@ -80,7 +89,7 @@ int main(int argc, char *argv[])
      */
     bool audio_was_active = false;
 
-    BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyS0", 115200);
+    // BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyACM0", 115200);
     // PersonDetector persondetect("127.0.0.1", "5678", device_controller);
     // persondetect.init();
     /* End of Person Tracking Subsystem: */
@@ -89,28 +98,13 @@ int main(int argc, char *argv[])
     openwakeword_detector wakeword_detect;
     wakeword_detect.init("../model/hey_robo.onnx");
 
-    /* End of Audio Interaction Subsystem: */
-    audio_async audio(30*1000);
-    if (!audio.init(params.capture_id, WHISPER_SAMPLE_RATE)) {
-        fprintf(stderr, "%s: audio.init() failed!\n", __func__);
-        return 1;
-    }
-
-    audio.resume();
-
     // Start timer for Robo blinking:
     auto start_time = std::chrono::steady_clock::now();
     cv::Mat cam_frame;
-
+    // clear audio buffer
+    audio.clear();
     while (!is_interrupted)
     {
-        is_running = sdl_poll_events();
-
-        if (!is_running)
-        {
-            break;
-        }
-
 
         /* Non-blocking call to get 32-bit floating point pcm samples from circular audio buffer
          * The default amount of samples to be fetched is around 2000ms, that is enough to fetch one or multiple words
@@ -121,6 +115,9 @@ int main(int argc, char *argv[])
         if (wake_word_detected)
         {
             printf("Wake word detected!\n");
+            audio.clear();
+            audio.get(2000, pcmf32_cur);
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             audio_was_active = true;
         }
 
@@ -131,8 +128,6 @@ int main(int argc, char *argv[])
             bool voice_activity_detected = ::vad_simple(pcmf32_cur, WHISPER_SAMPLE_RATE, 1250, params.vad_thold, params.freq_thold, params.print_energy);
             if (voice_activity_detected)
             {
-                /* Send a message to the client indicating that we are listening for incoming words; The client may hook-up an animation or activity to this */
-                mqtt_send_msg(mosq, mqtt_topic, mqtt_listening_msg);
 
                 /* Capture some more audio, to make sure we capture a full sentence, the amount of time to be captured is defined in the model_params struct */
                 audio.get(params.voice_ms, pcmf32_cur);
@@ -157,10 +152,10 @@ int main(int argc, char *argv[])
                 fprintf(stdout, "%s%s%s", "\033[1m", text_heard.c_str(), "\033[0m");
                 fflush(stdout);
 
-                /* Run llama inference */
+                // /* Run llama inference */
                 std::string text_to_speak = llama_inst.do_inference(text_heard);
 
-                /* Run an external script to convert the text back to speech and stream it back to the client */
+                // /* Run an external script to convert the text back to speech and stream it back to the client */
                 speak_with_file(params.speak, text_to_speak, params.speak_file, 2);
 
                 /* Empty the audio buffer, so that we do not process the same audio twice! */

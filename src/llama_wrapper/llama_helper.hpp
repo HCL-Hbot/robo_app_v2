@@ -1,6 +1,8 @@
 #ifndef LLAMA_HELPER_HPP
 #define LLAMA_HELPER_HPP
-
+#include <llama.h>
+#include <string>
+#include <algorithm>
 
 const std::string k_prompt_llama = R"(Text transcript of a never ending dialog, where {0} interacts with an AI assistant named {1}.
 {1} is helpful, kind, honest, friendly, good at writing and never fails to answer {0}’s requests immediately and with details and precision.
@@ -37,12 +39,12 @@ std::vector<llama_token> llama_tokenize(struct llama_context * ctx, const std::s
     return result;
 }
 
-std::string llama_token_to_piece(const struct llama_context * ctx, llama_token token) {
+static std::string llama_token_to_piece(const struct llama_context * ctx, llama_token token) {
     std::vector<char> result(8, 0);
-    const int n_tokens = llama_token_to_piece(llama_get_model(ctx), token, result.data(), result.size(), false);
+    const int n_tokens = llama_token_to_piece(llama_get_model(ctx), token, result.data(), result.size(), 0, false);
     if (n_tokens < 0) {
         result.resize(-n_tokens);
-        int check = llama_token_to_piece(llama_get_model(ctx), token, result.data(), result.size(), false);
+        int check = llama_token_to_piece(llama_get_model(ctx), token, result.data(), result.size(), 0, false);
         GGML_ASSERT(check == -n_tokens);
     } else {
         result.resize(n_tokens);

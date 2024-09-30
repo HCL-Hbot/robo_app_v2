@@ -1,6 +1,2 @@
-#!/bin/bash
-
-# Usage:
-#  speak <voice_id> <textfile>
 cat $2 | ../piper/piper --model "../model/nl_BE-nathalie-medium.onnx"  -f "../model/nl_BE-nathalie-medium.onnx.json" --output-raw |  \
   aplay -r 22050 -f S16_LE -t raw -

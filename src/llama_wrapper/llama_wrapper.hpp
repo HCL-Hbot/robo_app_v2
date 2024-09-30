@@ -36,7 +36,6 @@ public:
      */
     ~llama_wrapper()
     {
-        llama_print_timings(m_ctx);
         llama_free(m_ctx);
     }
 
@@ -49,6 +48,7 @@ private:
     */
     llama_context *m_ctx;
 
+    llama_sampler * smpl;
     /* Configuration parameters for the model and context */
     /* The default settings should be fine, and give a good starting ground */
     llama_context_params m_lcparams = llama_context_default_params();
@@ -92,18 +92,17 @@ private:
     /* Prepare the batch, so that it can be used later for decoding responses */
     void prepare_batch(std::vector<llama_token> &tokens, int n_past)
     {
-        {
-            m_batch.n_tokens = tokens.size();
+    {
+        m_batch.n_tokens = m_embd_inp.size();
 
-            for (int i = 0; i < m_batch.n_tokens; i++)
-            {
-                m_batch.token[i] = tokens[i];
-                m_batch.pos[i] = n_past + i;
-                m_batch.n_seq_id[i] = 1;
-                m_batch.seq_id[i][0] = 0;
-                m_batch.logits[i] = i == m_batch.n_tokens - 1;
-            }
+        for (int i = 0; i < m_batch.n_tokens; i++) {
+            m_batch.token[i]     = m_embd_inp[i];
+            m_batch.pos[i]       = i;
+            m_batch.n_seq_id[i]  = 1;
+            m_batch.seq_id[i][0] = 0;
+            m_batch.logits[i]    = i == m_batch.n_tokens - 1;
         }
+    }
     }
 };
 

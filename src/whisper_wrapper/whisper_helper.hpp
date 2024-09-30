@@ -23,7 +23,7 @@
  * @param t_ms Reference to an int64_t to store the transcription time in milliseconds.
  * @return std::string The transcription result.
  */
-std::string transcribe(
+static std::string transcribe(
         whisper_context * ctx,
         const model_params & params,
         const std::vector<float> & pcmf32,
@@ -57,7 +57,6 @@ std::string transcribe(
     wparams.prompt_n_tokens  = prompt_tokens.empty() ? 0       : prompt_tokens.size();
 
     wparams.audio_ctx        = params.audio_ctx;
-    wparams.speed_up         = params.speed_up;
 
     if (whisper_full(ctx, wparams, pcmf32.data(), pcmf32.size()) != 0) {
         return "";
