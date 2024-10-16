@@ -37,6 +37,10 @@ public:
         handleEyeAnimation(eye_nr, EyeAnimation::BLINK_ANIM);
     }
 
+    void disable_think_anim() {
+        serial_port_.write("DS106\r\n");
+    }
+
     void controlLedstrip(LedID strip_nr, int hue, int saturation, int value, LedstripCommandTypes anim, int duration = 1000) {
         int r, g, b;
         hsv_to_rgb(hue, saturation, value, r, g, b);

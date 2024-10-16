@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 
                 // /* Run llama inference */
                 std::string text_to_speak = llama_inst.do_inference(text_heard);
-
+                device_controller.disable_think_anim();
                 // /* Run an external script to convert the text back to speech and stream it back to the client */
                 speak_with_file(params.speak, text_to_speak, params.speak_file, 2);
 
