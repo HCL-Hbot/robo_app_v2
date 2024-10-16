@@ -38,3 +38,5 @@ lib/whisper
 build/
 cmake-*/
 piper/
+.vscode/
+to_speak/
