@@ -20,6 +20,7 @@
 #include <llama_wrapper.hpp>
 #include <whisper_wrapper.hpp>
 #include <common-sdl.h>
+#include <regex>
 
 static volatile bool is_interrupted = false;
 
@@ -86,7 +87,7 @@ int main(int argc, char *argv[])
      */
     bool audio_was_active = false;
 
-    BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyACM0", 1200);
+    // BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyACM0", 1200);
     // PersonDetector persondetect("127.0.0.1", "5678", device_controller);
     // persondetect.init();
     /* End of Person Tracking Subsystem: */
@@ -112,12 +113,11 @@ int main(int argc, char *argv[])
         if (wake_word_detected)
         {
             printf("Wake word detected!\n");
-            audio.clear();
             // Introduce a 2-second delay after the wake word is detected
             std::this_thread::sleep_for(std::chrono::seconds(1));
 
             audio.get(2000, pcmf32_cur);
-            device_controller.controlEyes(BRAINBOARD_HOST::EyeID::BOTH, 0, 0, BRAINBOARD_HOST::EyeAnimation::THINKING_ANIM, 100);
+            // device_controller.controlEyes(BRAINBOARD_HOST::EyeID::BOTH, 0, 0, BRAINBOARD_HOST::EyeAnimation::THINKING_ANIM, 100);
             audio_was_active = true;
         }
         if (audio_was_active)
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 
                 /* Run inference with whisper on the captured audio, this will output the sentence that was captured from the audio */
                 std::string text_heard = whisper_inst.do_inference(pcmf32_cur);
-
+                std::string result = "";
                 /* Was there any text returned from the whisper inference? If no text, we obviously don't want to run llama on it!*/
                 if (text_heard.empty())
                 {
@@ -147,9 +147,10 @@ int main(int argc, char *argv[])
                     /* Words were captured! Reset the timeout timer! */
                     audio_was_active = false;
                 }
-
+                std::regex pattern(R"(\brobo\b,?)", std::regex_constants::icase); 
+                result = std::regex_replace(text_heard, pattern, "");
                 /* Print the text we got from whisper inference  */
-                fprintf(stdout, "%s%s%s", "\033[1m", text_heard.c_str(), "\033[0m");
+                fprintf(stdout, "%s%s%s", "\033[1m", result.c_str(), "\033[0m");
                 fflush(stdout);
 
                 // /* Run llama inference */
@@ -171,7 +172,7 @@ int main(int argc, char *argv[])
         {
             // Every 30 sec Robo blinks.
             printf("10 second has passed.\n");
-            device_controller.blink(BRAINBOARD_HOST::EyeID::BOTH);
+            // device_controller.blink(BRAINBOARD_HOST::EyeID::BOTH);
             // Reset the start time
             start_time = current_time;
         }
