@@ -138,6 +138,7 @@ int main(int argc, char *argv[])
                 /* Was there any text returned from the whisper inference? If no text, we obviously don't want to run llama on it!*/
                 if (text_heard.empty())
                 {
+                    device_controller.controlEyes(BRAINBOARD_HOST::EyeID::BOTH, 0, 0, BRAINBOARD_HOST::EyeAnimation::CONFUSED_ANIM);
                     /* No words were captured! Continue with capturing new audio; */
                     audio.clear();
                     continue;
