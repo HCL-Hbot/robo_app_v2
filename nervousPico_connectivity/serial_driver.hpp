@@ -19,7 +19,8 @@ public:
     void open() {
         check(sp_get_port_by_name(port_name_.c_str(), &port_));
         check(sp_open(port_, SP_MODE_READ_WRITE));
-        check(sp_set_baudrate(port_, baud_rate_));
+       check(sp_set_baudrate(port_, baud_rate_));
+        // sp_set_flowcontrol(port_, SP_FLOWCONTROL_NONE);
     }
 
     void close() {
@@ -31,16 +32,22 @@ public:
     }
 
     void write(const std::string& data) {
-        int size = data.size();
-        int bytes_written = sp_blocking_write(port_, data.c_str(), size, 1000);
-        if (bytes_written < 0) {
-            check(bytes_written);  // Handle the error if any
-        } else if (bytes_written < size) {
-            std::cerr << "Error: Only " << bytes_written << " bytes written out of " << size << std::endl;
-        } else {
-            std::cout << "Data sent successfully." << std::endl;
-        }
-        check(sp_drain(port_));  // Ensure all written bytes are transmitted
+        int size = strlen(data.c_str());
+        printf("Sending: %s \r\n", data.c_str());
+            for(char c : data) {
+            sp_blocking_write(port_, &c, 1, 1000);
+            sp_drain(port_);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+        
+        // if (bytes_written < 0) {
+        //     check(bytes_written);  // Handle the error if any
+        // } else if (bytes_written < size) {
+        //     std::cerr << "Error: Only " << bytes_written << " bytes written out of " << size << std::endl;
+        // } else {
+        //     std::cout << "Data sent successfully." << std::endl;
+        // }
+        // check(sp_drain(port_));  // Ensure all written bytes are transmitted
     }
 
     std::string read() {

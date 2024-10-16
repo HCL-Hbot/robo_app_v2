@@ -48,7 +48,7 @@ bool audio_async::init(int capture_id, int sample_rate) {
 
     if (capture_id >= 0) {
         fprintf(stderr, "%s: attempt to open capture device %d : '%s' ...\n", __func__, capture_id, SDL_GetAudioDeviceName(capture_id, SDL_TRUE));
-        m_dev_id_in = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(capture_id, SDL_TRUE), SDL_TRUE, &capture_spec_requested, &capture_spec_obtained, 0);
+        m_dev_id_in = SDL_OpenAudioDevice("Nor-Tec streaming mic, USB Audio", SDL_TRUE, &capture_spec_requested, &capture_spec_obtained, 0);
     } else {
         fprintf(stderr, "%s: attempt to open default capture device ...\n", __func__);
         m_dev_id_in = SDL_OpenAudioDevice(nullptr, SDL_TRUE, &capture_spec_requested, &capture_spec_obtained, 0);

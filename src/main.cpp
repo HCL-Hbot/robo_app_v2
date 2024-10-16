@@ -33,7 +33,7 @@ void interrupt_handler(int _)
 int main(int argc, char *argv[])
 {
     signal(SIGINT, interrupt_handler);
-
+    signal(SIGTERM, interrupt_handler);
     /*
      * Whisper_params
      *
@@ -55,19 +55,16 @@ int main(int argc, char *argv[])
 
     /*
      * Create the async audio buffer with a instance of the RTP receiver so that the RTP receiver automatically updates the audio buffer
-    */
+     */
     audio_async audio(audio_buffer_size_ms);
-    if (!audio.init(1, WHISPER_SAMPLE_RATE))
+    if (!audio.init(-1, WHISPER_SAMPLE_RATE))
     {
         fprintf(stderr, "%s: audio.init() failed!\n", __func__);
         return 1;
     }
 
-
     // Start the audio capture
     audio.resume();
-
-
 
     /* This function call will load in the whisper model
      * It will also do a test run to calibrate the response of the model
@@ -89,7 +86,7 @@ int main(int argc, char *argv[])
      */
     bool audio_was_active = false;
 
-    // BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyACM0", 115200);
+    BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyACM0", 1200);
     // PersonDetector persondetect("127.0.0.1", "5678", device_controller);
     // persondetect.init();
     /* End of Person Tracking Subsystem: */
@@ -116,13 +113,16 @@ int main(int argc, char *argv[])
         {
             printf("Wake word detected!\n");
             audio.clear();
+            // Introduce a 2-second delay after the wake word is detected
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
             audio.get(2000, pcmf32_cur);
-            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+            device_controller.controlEyes(BRAINBOARD_HOST::EyeID::BOTH, 0, 0, BRAINBOARD_HOST::EyeAnimation::THINKING_ANIM, 100);
             audio_was_active = true;
         }
-
-        if(audio_was_active) {
-                        /* Detect audio activity using vad; A algorithm that determines voice activity by applying a band-pass filter and looking at the energy of the audio captured
+        if (audio_was_active)
+        {
+            /* Detect audio activity using vad; A algorithm that determines voice activity by applying a band-pass filter and looking at the energy of the audio captured
              * Want to learn more? See: https://speechprocessingbook.aalto.fi/Recognition/Voice_activity_detection.html
              */
             bool voice_activity_detected = ::vad_simple(pcmf32_cur, WHISPER_SAMPLE_RATE, 1250, params.vad_thold, params.freq_thold, params.print_energy);
@@ -160,17 +160,18 @@ int main(int argc, char *argv[])
 
                 /* Empty the audio buffer, so that we do not process the same audio twice! */
                 audio.clear();
+                audio_was_active = false;
             }
         }
 
         auto current_time = std::chrono::steady_clock::now();
         auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
 
-        if (elapsed_time > 1000 * 5)
+        if (elapsed_time > 1000 * 20)
         {
             // Every 30 sec Robo blinks.
-            printf("5 second has passed.\n");
-            // device_controller.blink(BRAINBOARD_HOST::EyeID::BOTH);
+            printf("10 second has passed.\n");
+            device_controller.blink(BRAINBOARD_HOST::EyeID::BOTH);
             // Reset the start time
             start_time = current_time;
         }
