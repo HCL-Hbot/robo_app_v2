@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
      */
     bool audio_was_active = false;
 
-    // BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyACM0", 1200);
+    BRAINBOARD_HOST::DeviceController device_controller("/dev/ttyACM0", 1200);
     // PersonDetector persondetect("127.0.0.1", "5678", device_controller);
     // persondetect.init();
     /* End of Person Tracking Subsystem: */
@@ -113,11 +113,11 @@ int main(int argc, char *argv[])
         if (wake_word_detected)
         {
             printf("Wake word detected!\n");
-            // Introduce a 2-second delay after the wake word is detected
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-
+            device_controller.controlEyes(BRAINBOARD_HOST::EyeID::BOTH, 0, 0, BRAINBOARD_HOST::EyeAnimation::THINKING_ANIM, 100);
             audio.get(2000, pcmf32_cur);
-            // device_controller.controlEyes(BRAINBOARD_HOST::EyeID::BOTH, 0, 0, BRAINBOARD_HOST::EyeAnimation::THINKING_ANIM, 100);
+            // Introduce a 2-second delay after the wake word is detected
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+  
             audio_was_active = true;
         }
         if (audio_was_active)
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
         {
             // Every 30 sec Robo blinks.
             printf("10 second has passed.\n");
-            // device_controller.blink(BRAINBOARD_HOST::EyeID::BOTH);
+            device_controller.blink(BRAINBOARD_HOST::EyeID::BOTH);
             // Reset the start time
             start_time = current_time;
         }

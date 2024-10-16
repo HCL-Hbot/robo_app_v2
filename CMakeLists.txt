@@ -13,7 +13,10 @@ FetchContent_Declare(
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/external/Openwakeword.cpp
 )
 
-set(WHISPER_CUDA ON)
+
+SET(GGML_CUDA ON)
+
+# set(WHISPER_CUDA ON)
 
 set(LLAMA_CUDA ON)
 
@@ -64,9 +67,7 @@ FetchContent_MakeAvailable(piper_model)
 FetchContent_MakeAvailable(piper_model_config)
 FetchContent_MakeAvailable(piper)
 
-add_definitions("-DGGML_USE_CUDA")
 
-SET(GGML_CUDA ON)
 FetchContent_MakeAvailable(whisper)
 
 FetchContent_MakeAvailable(openwakeword)

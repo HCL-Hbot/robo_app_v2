@@ -37,7 +37,6 @@ public:
             for(char c : data) {
             sp_blocking_write(port_, &c, 1, 1000);
             sp_drain(port_);
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
         
         // if (bytes_written < 0) {

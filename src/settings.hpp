@@ -65,7 +65,7 @@ struct model_params {
     std::string wake_cmd    = "";
     std::string heard_ok    = "";
     std::string language    = "nl";
-    std::string model_wsp   = "../model/ggml-large-v3-q5_0.bin";
+    std::string model_wsp   = "../model/ggml-medium-q5_0.bin";
     std::string model_llama = "../model/fietje-2b-chat-q6_k.gguf";
     std::string speak       = "./../speak";
     std::string speak_file  = "./../to_speak";
